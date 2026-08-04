@@ -1,6 +1,5 @@
 import streamlit as st
 
-# from services.book_loader import load_book
 from services.book_loader import load_uploaded_book
 from services.text_splitter import split_book
 from services.vector_store import create_vector_store
