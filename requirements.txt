@@ -9,6 +9,3 @@ faiss-cpu
 pypdf
 requests
 groq
-
-pip install -r requirements.txt
-streamlit run app.py
