@@ -1,3 +1,5 @@
+import io
+
 import streamlit as st
 
 from services.book_loader import load_uploaded_book
@@ -13,82 +15,948 @@ from services.quiz_service import generate_quiz
 # =========================================================
 
 st.set_page_config(
-    page_title="KitaabGhar AI",
+    page_title="LearnLens AI",
     page_icon="📚",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 
 # =========================================================
-# BOOK CONFIGURATION
+# CUSTOM UI
 # =========================================================
 
-# BOOK_PATH = "data/books/jane_eyre.txt"
+st.markdown(
+    """
+<style>
+
+/* =====================================================
+   GLOBAL
+   ===================================================== */
+
+.stApp {
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(183, 143, 67, 0.07),
+            transparent 30%
+        ),
+        #f8f6f1;
+}
+
+.block-container {
+    max-width: 1250px;
+    padding-top: 2.2rem;
+    padding-bottom: 4rem;
+}
+
+h1, h2, h3 {
+    color: #17233c;
+    letter-spacing: -0.02em;
+}
+
+p {
+    color: #4c5568;
+}
+
+
+/* =====================================================
+   STREAMLIT HEADER SPACING
+   ===================================================== */
+
+[data-testid="stHeader"] {
+    background: #0e1117;
+}
+
+[data-testid="stMainBlockContainer"] {
+    padding-top: 2.2rem;
+}
+
+
+/* =====================================================
+   SIDEBAR
+   ===================================================== */
+
+[data-testid="stSidebar"] {
+    background: #17233c;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-testid="stSidebar"] * {
+    color: #f7f3e8;
+}
+
+[data-testid="stSidebar"] hr {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-testid="stSidebar"] .stCaption {
+    color: #c6cad4 !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stFileUploader"] {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.7rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+
+/* =====================================================
+   HERO
+   ===================================================== */
+
+.ll-hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(
+            135deg,
+            #17233c 0%,
+            #263c62 100%
+        );
+    border-radius: 22px;
+    padding: 2.2rem 2.6rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 14px 38px rgba(23, 35, 60, 0.16);
+}
+
+.ll-hero::after {
+    content: "AI";
+    position: absolute;
+    right: 2rem;
+    top: -1.2rem;
+    font-size: 9rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.035);
+    pointer-events: none;
+}
+
+.ll-eyebrow {
+    color: #f1bd50;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+}
+
+.ll-title {
+    color: #ffffff;
+    font-size: 2.6rem;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    margin-bottom: 0.7rem;
+}
+
+.ll-title-icon {
+    color: #f1bd50;
+    margin-right: 0.35rem;
+}
+
+.ll-subtitle {
+    max-width: 780px;
+    color: #e4e8ef !important;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+
+/* =====================================================
+   EMPTY STATE
+   ===================================================== */
+
+.ll-empty {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #e7e1d6;
+    border-radius: 22px;
+    padding: 3.5rem 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(32, 43, 64, 0.06);
+}
+
+.ll-empty-icon {
+    font-size: 2.7rem;
+    margin-bottom: 1rem;
+}
+
+.ll-empty-title {
+    color: #17233c;
+    font-size: 1.35rem;
+    font-weight: 750;
+    margin-bottom: 0.7rem;
+}
+
+.ll-empty-text {
+    color: #697386;
+    max-width: 760px;
+    margin: auto;
+    line-height: 1.7;
+}
+
+.ll-format-row {
+    color: #9a762e;
+    font-size: 0.72rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    margin-top: 1.6rem;
+}
+
+
+/* =====================================================
+   STATUS CARDS
+   ===================================================== */
+
+.ll-card {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid #e9e4da;
+    border-radius: 17px;
+    padding: 1rem 1.15rem;
+    min-height: 105px;
+    box-shadow: 0 7px 24px rgba(32, 43, 64, 0.05);
+}
+
+.ll-card-label {
+    color: #9a762e;
+    font-size: 0.71rem;
+    font-weight: 750;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.ll-card-value {
+    color: #17233c;
+    font-size: 1.03rem;
+    font-weight: 720;
+    line-height: 1.3;
+}
+
+.ll-card-sub {
+    color: #7a8392;
+    font-size: 0.78rem;
+    margin-top: 0.35rem;
+}
+
+
+/* =====================================================
+   SECTION HEADERS
+   ===================================================== */
+
+.ll-section-kicker {
+    color: #a57c2d;
+    font-size: 0.73rem;
+    font-weight: 750;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.ll-section-title {
+    color: #17233c;
+    font-size: 1.65rem;
+    font-weight: 750;
+    margin-bottom: 0.25rem;
+}
+
+.ll-section-description {
+    color: #697386;
+    font-size: 0.94rem;
+    margin-bottom: 1rem;
+    line-height: 1.55;
+}
+
+
+/* =====================================================
+   TABS
+   ===================================================== */
+
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0.4rem;
+    background: #ece8df;
+    border-radius: 14px;
+    padding: 0.35rem;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 48px;
+    border-radius: 10px;
+    padding-left: 1.4rem;
+    padding-right: 1.4rem;
+    color: #536074;
+    font-weight: 650;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #ffffff !important;
+    color: #17233c !important;
+    box-shadow: 0 3px 10px rgba(25, 35, 55, 0.07);
+}
+
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+
+.stButton > button {
+    border-radius: 11px;
+    font-weight: 650;
+    min-height: 42px;
+    transition: 0.18s ease;
+}
+
+.stButton > button:hover {
+    transform: translateY(-1px);
+}
+
+button[kind="primary"] {
+    background: #17233c !important;
+    border-color: #17233c !important;
+    color: white !important;
+}
+
+/* Secondary buttons on light background */
+.stButton > button:not([kind="primary"]) {
+    background: #ffffff !important;
+    color: #17233c !important;
+    border: 1px solid #d8dce4 !important;
+}
+
+.stButton > button:not([kind="primary"]):hover {
+    background: #f3f5f8 !important;
+    color: #17233c !important;
+    border-color: #17233c !important;
+}
+
+.stButton > button:not([kind="primary"]) p {
+    color: #17233c !important;
+}
+
+/* =====================================================
+   INPUTS
+   ===================================================== */
+
+div[data-baseweb="select"] > div {
+    border-radius: 11px;
+}
+
+[data-testid="stChatInput"] {
+    border-radius: 14px;
+}
+
+/* =====================================================
+   CHAT
+   ===================================================== */
+
+[data-testid="stChatMessage"] {
+    background: #ffffff !important;
+    border: 1px solid #e4ded3 !important;
+    border-radius: 16px !important;
+    padding: 0.7rem 1rem !important;
+    margin-bottom: 0.8rem !important;
+    box-shadow: 0 5px 18px rgba(32, 43, 64, 0.05);
+}
+
+/* Force chat text to remain readable on light cards */
+[data-testid="stChatMessage"] p,
+[data-testid="stChatMessage"] li,
+[data-testid="stChatMessage"] span,
+[data-testid="stChatMessage"] div {
+    color: #344054;
+}
+
+/* User question */
+[data-testid="stChatMessage"]:has(
+    [data-testid="chatAvatarIcon-user"]
+) p {
+    color: #17233c !important;
+    font-weight: 650;
+}
+
+/* Assistant answer */
+[data-testid="stChatMessage"]:has(
+    [data-testid="chatAvatarIcon-assistant"]
+) p,
+[data-testid="stChatMessage"]:has(
+    [data-testid="chatAvatarIcon-assistant"]
+) li {
+    color: #344054 !important;
+    line-height: 1.7;
+}
+
+/* Markdown headings inside answers */
+[data-testid="stChatMessage"] h1,
+[data-testid="stChatMessage"] h2,
+[data-testid="stChatMessage"] h3,
+[data-testid="stChatMessage"] h4 {
+    color: #17233c !important;
+}
+
+/* Bold text inside answers */
+[data-testid="stChatMessage"] strong {
+    color: #17233c !important;
+}
+
+/* Chat input */
+[data-testid="stChatInput"] {
+    border-radius: 14px !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    color: #f8fafc !important;
+}
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #b7bdc8 !important;
+}
+
+/* =====================================================
+   EXPANDERS
+   ===================================================== */
+
+[data-testid="stExpander"] {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid #e6e1d7;
+    border-radius: 13px;
+    overflow: hidden;
+}
+
+
+/* =====================================================
+   QUIZ
+   ===================================================== */
+
+[data-testid="stRadio"] {
+    background: #ffffff;
+    border: 1px solid #ebe6dc;
+    border-radius: 14px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.6rem;
+}
+
+
+/* =====================================================
+   ALERTS
+   ===================================================== */
+
+[data-testid="stAlert"] {
+    border-radius: 13px;
+}
+
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
+.ll-footer {
+    text-align: center;
+    color: #9a9faa;
+    font-size: 0.78rem;
+    margin-top: 3rem;
+    padding-top: 1.3rem;
+    border-top: 1px solid #e5e0d7;
+}
+
+/* =====================================================
+   CONFIRMATION DIALOG
+   ===================================================== */
+
+/* Dialog background */
+div[data-testid="stDialog"] > div {
+    background: #ffffff !important;
+    color: #17233c !important;
+}
+
+/* Dialog title */
+div[data-testid="stDialog"] h2 {
+    color: #17233c !important;
+    font-weight: 750 !important;
+}
+
+/* Normal dialog text */
+div[data-testid="stDialog"] p {
+    color: #4c5568 !important;
+}
+
+/* Warning box */
+div[data-testid="stDialog"] [data-testid="stAlert"] {
+    background: #fff7df !important;
+    border: 1px solid #ead59a !important;
+}
+
+/* Warning text */
+div[data-testid="stDialog"] [data-testid="stAlert"] p {
+    color: #765b18 !important;
+}
+
+/* Cancel button */
+div[data-testid="stDialog"] button[kind="secondary"] {
+    background: #ffffff !important;
+    color: #17233c !important;
+    border: 1px solid #d8dce4 !important;
+}
+
+div[data-testid="stDialog"] button[kind="secondary"] p {
+    color: #17233c !important;
+}
+
+/* Delete button */
+div[data-testid="stDialog"] button[kind="primary"] {
+    background: #b42318 !important;
+    border-color: #b42318 !important;
+    color: #ffffff !important;
+}
+
+div[data-testid="stDialog"] button[kind="primary"] p {
+    color: #ffffff !important;
+}
+
+/* Delete button hover */
+div[data-testid="stDialog"] button[kind="primary"]:hover {
+    background: #912018 !important;
+    border-color: #912018 !important;
+}
+
+/* Close X */
+div[data-testid="stDialog"] button {
+    opacity: 1 !important;
+}
+
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 
 # =========================================================
-# PREPARE BOOK
+# FINAL UI POLISH OVERRIDES
 # =========================================================
 
-# @st.cache_resource
-# def prepare_book():
-#     documents = load_book(BOOK_PATH)
+st.markdown(
+    """
+<style>
 
-#     chunks = split_book(documents)
+/* Compact workspace */
+.block-container {
+    max-width: 1180px !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 2.5rem !important;
+}
 
-#     vector_store = create_vector_store(chunks)
+/* Smaller hero: tools appear sooner */
+.ll-hero {
+    padding: 1.55rem 2rem !important;
+    margin-bottom: 1.15rem !important;
+    border-radius: 18px !important;
+}
 
-#     return chunks, vector_store
+.ll-hero::after { font-size: 7rem !important; }
+.ll-eyebrow { margin-bottom: 0.45rem !important; }
 
+.ll-title {
+    font-size: 2.15rem !important;
+    margin-bottom: 0.45rem !important;
+}
 
-# =========================================================
-# HEADER
-# =========================================================
+.ll-subtitle {
+    font-size: 0.94rem !important;
+    line-height: 1.55 !important;
+}
 
-st.title("📚 KitaabGhar AI")
+/* Compact status cards */
+.ll-card {
+    min-height: 88px !important;
+    padding: 0.8rem 1rem !important;
+}
 
-st.caption(
-    "An LLM-powered intelligent reading assistant"
+.ll-card-label { margin-bottom: 0.3rem !important; }
+.ll-card-sub { margin-top: 0.2rem !important; }
+
+/* Main navigation */
+.stTabs [data-baseweb="tab-list"] {
+    position: sticky;
+    top: 0.35rem;
+    z-index: 20;
+    margin-top: 0.15rem;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 5px 16px rgba(23, 35, 60, 0.06);
+}
+
+.stTabs [data-baseweb="tab"] {
+    flex: 1;
+    justify-content: center;
+}
+
+/* Compact section headings */
+.ll-section-kicker { margin-top: 0.35rem !important; }
+.ll-section-title { font-size: 1.45rem !important; }
+.ll-section-description { margin-bottom: 0.7rem !important; }
+
+/* Readable controls */
+.stSelectbox label,
+.stRadio label,
+.stTextInput label {
+    color: #344054 !important;
+    font-weight: 600 !important;
+}
+
+div[data-baseweb="select"] > div {
+    background: #ffffff !important;
+    color: #17233c !important;
+    border: 1px solid #d8dce4 !important;
+}
+
+div[data-baseweb="select"] span {
+    color: #17233c !important;
+}
+
+/* Primary buttons */
+button[kind="primary"],
+.stButton > button[kind="primary"] {
+    background: #17233c !important;
+    border-color: #17233c !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+button[kind="primary"] p,
+.stButton > button[kind="primary"] p {
+    color: #ffffff !important;
+}
+
+/* Prominent chat input */
+[data-testid="stChatInput"] {
+    border: 2px solid #263c62 !important;
+    box-shadow: 0 5px 16px rgba(23, 35, 60, 0.09) !important;
+    margin-bottom: 0.75rem !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    color: #ffffff !important;
+}
+
+[data-testid="stChatInput"] textarea::placeholder {
+    color: #cbd1dc !important;
+}
+
+/* Compact chat cards */
+[data-testid="stChatMessage"] {
+    padding: 0.65rem 0.9rem !important;
+    margin-bottom: 0.55rem !important;
+}
+
+[data-testid="stChatMessage"] p {
+    margin-bottom: 0.45rem !important;
+}
+
+/* Bordered result/question containers */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    margin-bottom: 0.45rem !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"] p,
+[data-testid="stVerticalBlockBorderWrapper"] li,
+[data-testid="stVerticalBlockBorderWrapper"] strong {
+    color: #26344d !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"] h1,
+[data-testid="stVerticalBlockBorderWrapper"] h2,
+[data-testid="stVerticalBlockBorderWrapper"] h3 {
+    color: #17233c !important;
+}
+
+/* Quiz */
+[data-testid="stRadio"] {
+    background: #ffffff !important;
+    border: 1px solid #ded8cd !important;
+    padding: 0.55rem 0.8rem !important;
+    margin: 0.3rem 0 0.25rem !important;
+}
+
+[data-testid="stRadio"] p,
+[data-testid="stRadio"] label,
+[data-testid="stRadio"] span,
+[data-testid="stRadio"] div {
+    color: #26344d !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"] h3 {
+    font-size: 1.16rem !important;
+    line-height: 1.4 !important;
+    margin-top: 0.2rem !important;
+    margin-bottom: 0.45rem !important;
+}
+
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stCaptionContainer"] p {
+    color: #7a8392 !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+}
+
+/* Metrics */
+[data-testid="stMetricLabel"] p {
+    color: #697386 !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #17233c !important;
+}
+
+/* Sidebar metrics */
+[data-testid="stSidebar"] [data-testid="stMetricValue"] {
+    color: #ffffff !important;
+    font-size: 1.35rem !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stMetricLabel"] p {
+    color: #c6cad4 !important;
+}
+
+/* Alerts and footer */
+[data-testid="stAlert"] p { opacity: 1 !important; }
+.ll-footer { margin-top: 1.8rem !important; }
+
+</style>
+""",
+    unsafe_allow_html=True,
 )
 
 # =========================================================
-# BOOK UPLOAD
+# FINAL UX REDESIGN
 # =========================================================
 
-st.sidebar.header("📚 Book Setup")
+st.markdown(
+    """
+<style>
+/* Final visual system */
+.block-container { max-width: 1120px !important; padding-top: 1.15rem !important; }
+.ll-hero { padding: 1.35rem 1.7rem !important; margin-bottom: 1rem !important; border-radius: 18px !important; }
+.ll-title { font-size: 2rem !important; }
+.ll-subtitle { max-width: 700px !important; }
+
+/* Compact document strip instead of dashboard clutter */
+.ll-doc-strip {
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  background:#fff; border:1px solid #e6e0d5; border-radius:14px;
+  padding:.8rem 1rem; margin:.75rem 0 1rem; box-shadow:0 5px 18px rgba(23,35,60,.045);
+}
+.ll-doc-main { color:#17233c; font-weight:750; }
+.ll-doc-meta { color:#7a8392; font-size:.82rem; margin-top:.15rem; }
+.ll-ready-pill { white-space:nowrap; background:#edf7ef; color:#287a43; border:1px solid #cfe8d5; border-radius:999px; padding:.4rem .75rem; font-size:.78rem; font-weight:750; }
+
+/* Tool navigation should look like real navigation */
+.stTabs [data-baseweb="tab-list"] {
+  position:static !important; background:#fff !important; border:1px solid #e3ddd2 !important;
+  border-radius:15px !important; padding:.35rem !important; gap:.35rem !important;
+  box-shadow:0 6px 20px rgba(23,35,60,.055) !important; margin-bottom:1.15rem !important;
+}
+.stTabs [data-baseweb="tab"] { min-height:52px !important; font-size:.95rem !important; color:#5d687a !important; }
+.stTabs [aria-selected="true"] { background:#17233c !important; color:#fff !important; box-shadow:none !important; }
+.stTabs [aria-selected="true"] p { color:#fff !important; }
+
+/* Ask AI is the primary action */
+.ll-chat-intro { background:#fff; border:1px solid #e4ded3; border-radius:16px; padding:1rem 1.15rem .9rem; margin-bottom:.75rem; }
+.ll-chat-intro .ll-section-kicker { margin-top:0 !important; }
+[data-testid="stChatInput"] { background:#17233c !important; border:2px solid #17233c !important; border-radius:15px !important; box-shadow:0 8px 24px rgba(23,35,60,.13) !important; }
+[data-testid="stChatInput"] textarea { color:#fff !important; font-size:1rem !important; }
+[data-testid="stChatInput"] textarea::placeholder { color:#cbd2df !important; }
+
+/* Summary controls */
+.ll-tool-card { background:#fff; border:1px solid #e4ded3; border-radius:18px; padding:1.1rem 1.2rem; box-shadow:0 6px 20px rgba(23,35,60,.045); margin-bottom:1rem; }
+[data-testid="stAlert"] { background:#f4f7fb !important; border:1px solid #dde5ef !important; }
+[data-testid="stAlert"] p { color:#43516a !important; }
+
+/* Quiz: high contrast, grouped, readable */
+[data-testid="stVerticalBlockBorderWrapper"] {
+  background:#fff !important; border:1px solid #e1dbd0 !important; border-radius:18px !important;
+  box-shadow:0 5px 18px rgba(23,35,60,.045) !important; padding:.35rem !important; margin-bottom:1rem !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] h3,
+[data-testid="stVerticalBlockBorderWrapper"] h3 p { color:#17233c !important; opacity:1 !important; font-size:1.16rem !important; line-height:1.45 !important; }
+[data-testid="stVerticalBlockBorderWrapper"] p,
+[data-testid="stVerticalBlockBorderWrapper"] label,
+[data-testid="stVerticalBlockBorderWrapper"] span { color:#344054 !important; opacity:1 !important; }
+[data-testid="stRadio"] { border:0 !important; background:transparent !important; padding:.15rem 0 !important; }
+[data-testid="stRadio"] label { background:#f8f9fb !important; border:1px solid #e1e5eb !important; border-radius:10px !important; padding:.55rem .7rem !important; margin:.22rem 0 !important; }
+[data-testid="stRadio"] label:hover { border-color:#263c62 !important; background:#f2f5f9 !important; }
+
+/* Keep every heading readable on cream background */
+.stApp h1,.stApp h2,.stApp h3,.stApp h4 { color:#17233c !important; }
+.stApp [data-testid="stCaptionContainer"] p { color:#7a8392 !important; }
+
+@media (max-width: 760px) {
+  .ll-doc-strip { align-items:flex-start; flex-direction:column; }
+  .ll-ready-pill { align-self:flex-start; }
+  .ll-hero::after { display:none; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+<style>
+/* ===== Workspace navigation: large, unmistakable controls ===== */
+[data-testid="stSegmentedControl"] { margin: .7rem 0 1.35rem !important; }
+[data-testid="stSegmentedControl"] [role="radiogroup"] {
+    width:100% !important; background:#ffffff !important; border:1px solid #ddd6ca !important;
+    border-radius:16px !important; padding:6px !important; gap:6px !important;
+    box-shadow:0 6px 20px rgba(23,35,60,.06) !important;
+}
+[data-testid="stSegmentedControl"] label {
+    flex:1 1 0 !important; min-height:50px !important; justify-content:center !important;
+    border-radius:11px !important; font-weight:750 !important; color:#46546b !important;
+}
+[data-testid="stSegmentedControl"] label:has(input:checked) {
+    background:#17233c !important; color:#ffffff !important;
+}
+[data-testid="stSegmentedControl"] label:has(input:checked) p,
+[data-testid="stSegmentedControl"] label:has(input:checked) span { color:#ffffff !important; }
+
+/* ===== Summary: one compact focused card ===== */
+.ll-section-description { max-width:820px !important; margin-bottom:1rem !important; }
+
+/* ===== Quiz: explicit contrast and compact question cards ===== */
+.ll-quiz-question {
+    color:#17233c !important; font-size:1.28rem !important; line-height:1.42 !important;
+    font-weight:800 !important; margin:.35rem 0 .8rem !important; opacity:1 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background:#ffffff !important; border:1px solid #ddd7cc !important;
+    border-radius:16px !important; box-shadow:0 5px 18px rgba(23,35,60,.05) !important;
+    margin-bottom:.85rem !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stCaptionContainer"] p {
+    color:#8a6a1f !important; font-weight:800 !important; letter-spacing:.055em !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stRadio"] label {
+    width:100% !important; background:#f8f9fb !important; border:1px solid #e1e5eb !important;
+    border-radius:10px !important; padding:.62rem .8rem !important; margin:.18rem 0 !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stRadio"] label p {
+    color:#17233c !important; font-size:.96rem !important; opacity:1 !important;
+}
+@media (max-width:760px) {
+  [data-testid="stSegmentedControl"] [role="radiogroup"] { flex-direction:column !important; }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# =========================================================
+# HERO
+# =========================================================
+
+st.markdown(
+    '<div class="ll-hero">'
+    '<div class="ll-eyebrow">AI-Powered Learning Workspace</div>'
+    '<div class="ll-title">'
+    '<span class="ll-title-icon">&#10022;</span> LearnLens AI'
+    '</div>'
+    '<p class="ll-subtitle">'
+    'Turn your learning material into interactive knowledge. '
+    'Ask grounded questions, generate intelligent summaries, '
+    'and test your understanding with AI-generated quizzes.'
+    '</p>'
+    '</div>',
+    unsafe_allow_html=True,
+)
+
+# =========================================================
+# SIDEBAR BRANDING
+# =========================================================
+
+st.sidebar.markdown(
+    """
+## 📚 LearnLens AI
+
+**AI Study & Document Assistant**
+
+Upload learning material and transform it into an
+interactive AI-powered knowledge base.
+"""
+)
+
+st.sidebar.divider()
+
+
+# =========================================================
+# DOCUMENT UPLOAD
+# =========================================================
+
+st.sidebar.subheader(
+    "📤 Upload Material"
+)
 
 uploaded_file = st.sidebar.file_uploader(
-    "Upload your book",
+    "Choose a PDF or TXT file",
     type=["pdf", "txt"],
-    help="Upload a PDF or TXT book."
+    help=(
+        "Upload books, textbooks, study notes, "
+        "research papers, or other readable learning material."
+    ),
 )
 
+st.sidebar.caption(
+    "Supports books, textbooks, notes, papers "
+    "and study material in PDF or TXT format."
+)
+
+# =========================================================
+# EMPTY STATE
+# =========================================================
 
 if uploaded_file is None:
 
-    st.info(
-        "👈 Upload a PDF or TXT book from the sidebar to begin."
+    st.markdown(
+        '<div class="ll-empty">'
+        '<div class="ll-empty-icon">📄</div>'
+        '<div class="ll-empty-title">'
+        'Your AI learning workspace is ready'
+        '</div>'
+        '<div class="ll-empty-text">'
+        'Upload a PDF or TXT document from the sidebar. '
+        'LearnLens AI will build a searchable knowledge base '
+        'that you can explore through grounded question answering, '
+        'smart summaries, and AI-generated quizzes.'
+        '</div>'
+        '<div class="ll-format-row">'
+        'BOOKS &nbsp;·&nbsp; '
+        'TEXTBOOKS &nbsp;·&nbsp; '
+        'NOTES &nbsp;·&nbsp; '
+        'RESEARCH PAPERS &nbsp;·&nbsp; '
+        'STUDY MATERIAL'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
     st.stop()
-    
 
 # =========================================================
-# PROCESS BOOK
+# PROCESS UPLOADED DOCUMENT
 # =========================================================
 
 @st.cache_resource(show_spinner=False)
 def prepare_uploaded_book(
     file_name,
-    file_bytes
+    file_bytes,
 ):
-    import io
 
-    class UploadedBook:
+    class UploadedDocument:
+
         def __init__(
             self,
             name,
-            data
+            data,
         ):
             self.name = name
             self._data = data
@@ -96,24 +964,28 @@ def prepare_uploaded_book(
         def getvalue(self):
             return self._data
 
-        def read(self, *args, **kwargs):
+        def read(
+            self,
+            *args,
+            **kwargs,
+        ):
             return self._data
 
-    book_file = UploadedBook(
+    document_file = UploadedDocument(
         file_name,
-        file_bytes
+        file_bytes,
     )
 
-    # PDF reader needs a file-like stream.
     if file_name.lower().endswith(".pdf"):
-        book_file = io.BytesIO(
+
+        document_file = io.BytesIO(
             file_bytes
         )
 
-        book_file.name = file_name
+        document_file.name = file_name
 
     documents = load_uploaded_book(
-        book_file
+        document_file
     )
 
     chunks = split_book(
@@ -127,95 +999,223 @@ def prepare_uploaded_book(
     return (
         documents,
         chunks,
-        vector_store
+        vector_store,
     )
 
 
 try:
 
     with st.spinner(
-        "Processing book and building knowledge base..."
+        "Preparing your AI learning workspace..."
     ):
 
         documents, chunks, vector_store = (
             prepare_uploaded_book(
                 uploaded_file.name,
-                uploaded_file.getvalue()
+                uploaded_file.getvalue(),
             )
         )
 
 except Exception as error:
 
     st.error(
-        f"Unable to process book: {error}"
+        f"Unable to process this document: {error}"
     )
 
     st.stop()
-    
-st.success(
-    f"📖 {uploaded_file.name} loaded successfully — "
-    f"{len(chunks)} knowledge chunks ready."
+
+
+# =========================================================
+# DOCUMENT METADATA
+# =========================================================
+
+file_type = (
+    uploaded_file.name
+    .split(".")[-1]
+    .upper()
+)
+
+file_size_mb = (
+    len(uploaded_file.getvalue())
+    / (1024 * 1024)
+)
+
+document_display_name = uploaded_file.name
+
+if len(document_display_name) > 34:
+
+    document_display_name = (
+        document_display_name[:31]
+        + "..."
+    )
+
+
+# =========================================================
+# SIDEBAR - CURRENT DOCUMENT
+# =========================================================
+
+st.sidebar.divider()
+
+st.sidebar.subheader(
+    "📄 Current Document"
+)
+
+st.sidebar.markdown(
+    f"**{uploaded_file.name}**"
+)
+
+sidebar_meta_1, sidebar_meta_2 = (
+    st.sidebar.columns(2)
+)
+
+with sidebar_meta_1:
+
+    st.metric(
+        "Type",
+        file_type,
+    )
+
+with sidebar_meta_2:
+
+    st.metric(
+        "Size",
+        f"{file_size_mb:.2f} MB",
+    )
+
+st.sidebar.caption(
+    f"🧩 {len(chunks)} knowledge chunks indexed"
 )
 
 
 # =========================================================
-# TABS
+# SIDEBAR - AI STACK
 # =========================================================
 
-chat_tab, summary_tab, quiz_tab = st.tabs(
-    [
-        "💬 Book Chat",
-        "📝 AI Summary",
-        "🧠 AI Quiz"
-    ]
+st.sidebar.divider()
+
+st.sidebar.subheader(
+    "🧠 AI Stack"
 )
-# =========================================================
-# BOOK CHAT + CONVERSATION HISTORY
-# =========================================================
+
+st.sidebar.markdown(
+    """
+**Embedding Model**  
+BAAI/bge-small-en-v1.5
+
+**Vector Database**  
+FAISS
+
+**Language Model**  
+Llama 3.1 8B Instant
+
+**Inference**  
+Groq
+
+**Architecture**  
+Retrieval-Augmented Generation
+"""
+)
 
 
 # =========================================================
-# CLEAR CHAT CONFIRMATION DIALOG
+# SIDEBAR - RAG PIPELINE
 # =========================================================
 
-@st.dialog("Delete chat history?")
+with st.sidebar.expander(
+    "⚙️ How LearnLens Works"
+):
+
+    st.markdown(
+        """
+**01 · Extract**  
+Read text from the uploaded material.
+
+**02 · Chunk**  
+Split the document into smaller passages.
+
+**03 · Embed**  
+Convert passages into semantic vectors.
+
+**04 · Index**  
+Store embeddings inside FAISS.
+
+**05 · Retrieve**  
+Find passages relevant to the user's query.
+
+**06 · Generate**  
+Provide retrieved context to the LLM to produce a grounded response.
+"""
+    )
+
+
+# =========================================================
+# COMPACT DOCUMENT STATUS
+# =========================================================
+
+st.markdown(
+    f'<div class="ll-doc-strip">'
+    f'<div><div class="ll-doc-main">📄 {document_display_name}</div>'
+    f'<div class="ll-doc-meta">{file_type} · {file_size_mb:.2f} MB · {len(chunks)} searchable chunks</div></div>'
+    f'<div class="ll-ready-pill">● AI workspace ready</div>'
+    f'</div>',
+    unsafe_allow_html=True,
+)
+
+# =========================================================
+# WORKSPACE NAVIGATION
+# =========================================================
+
+# Use a real segmented workspace switch instead of Streamlit tabs.
+# This keeps the primary tools obvious and avoids the tiny tab strip.
+workspace = st.segmented_control(
+    "Workspace",
+    ["💬 Ask AI", "📝 Smart Summary", "🧠 AI Quiz"],
+    default="💬 Ask AI",
+    key="workspace_navigation",
+    label_visibility="collapsed",
+)
+
+if workspace is None:
+    workspace = "💬 Ask AI"
+
+
+# =========================================================
+# CLEAR CHAT CONFIRMATION
+# =========================================================
+
+@st.dialog(
+    "Delete conversation?"
+)
 def confirm_clear_chat():
 
     st.warning(
-        "Are you sure you want to delete the entire chat history?"
+        "Are you sure you want to delete "
+        "the entire conversation?"
     )
 
     st.write(
-        "All questions, answers, and retrieved sources "
-        "from this conversation will be permanently removed."
+        "All questions, answers and retrieved sources "
+        "from this session will be removed."
     )
 
-    col1, col2 = st.columns(2)
+    cancel_col, delete_col = st.columns(2)
 
-    # -----------------------------------------------------
-    # CANCEL
-    # -----------------------------------------------------
-
-    with col1:
+    with cancel_col:
 
         if st.button(
             "Cancel",
             use_container_width=True,
-            key="cancel_clear_chat"
+            key="cancel_clear_chat",
         ):
             st.rerun()
 
-    # -----------------------------------------------------
-    # CONFIRM DELETE
-    # -----------------------------------------------------
-
-    with col2:
+    with delete_col:
 
         if st.button(
-            "🗑️ Delete Chat",
+            "🗑️ Delete Conversation",
             type="primary",
             use_container_width=True,
-            key="confirm_clear_chat"
+            key="confirm_clear_chat",
         ):
 
             st.session_state.chat_history = []
@@ -224,72 +1224,79 @@ def confirm_clear_chat():
 
 
 # =========================================================
-# BOOK CHAT TAB
+# ASK AI / DOCUMENT CHAT
 # =========================================================
 
-with chat_tab:
+if workspace == "💬 Ask AI":
 
-    st.header("💬 Chat With The Book")
+    st.markdown(
+        """
+<div class="ll-chat-intro">
+<div class="ll-section-kicker">
+    Grounded Question Answering
+</div>
 
-    st.write(
-        "Ask questions and KitaabGhar AI will retrieve "
-        "relevant sections before generating an answer."
+<div class="ll-section-title">
+    Chat with your learning material
+</div>
+
+<div class="ll-section-description">
+    Ask questions in natural language.
+    LearnLens retrieves relevant passages from your uploaded
+    document before generating a grounded answer.
+</div>
+</div>
+""",
+        unsafe_allow_html=True,
     )
 
-    # =====================================================
+    # -----------------------------------------------------
     # INITIALIZE CHAT HISTORY
-    # =====================================================
+    # -----------------------------------------------------
 
     if "chat_history" not in st.session_state:
-
         st.session_state.chat_history = []
 
-    if "active_book" not in st.session_state:
+    if "active_document" not in st.session_state:
+        st.session_state.active_document = uploaded_file.name
 
-        st.session_state.active_book = uploaded_file.name
+    # -----------------------------------------------------
+    # RESET HISTORY WHEN DOCUMENT CHANGES
+    # -----------------------------------------------------
 
-    # =====================================================
-    # RESET HISTORY WHEN BOOK CHANGES
-    # =====================================================
-
-    if st.session_state.active_book != uploaded_file.name:
+    if (
+        st.session_state.active_document
+        != uploaded_file.name
+    ):
 
         st.session_state.chat_history = []
+        st.session_state.active_document = uploaded_file.name
 
-        st.session_state.active_book = uploaded_file.name
-
-    # =====================================================
-    # QUESTION INPUT
-    # =====================================================
-    # The input is intentionally placed before the history
-    # so it stays above the previous conversations.
-    # =====================================================
+    # -----------------------------------------------------
+    # CHAT INPUT
+    # -----------------------------------------------------
 
     question = st.chat_input(
-        "Ask something about the book...",
-        key="book_chat_input"
+        "Ask something about your material...",
+        key="document_chat_input",
     )
 
-    # =====================================================
-    # PROCESS NEW QUESTION
-    # =====================================================
+    # -----------------------------------------------------
+    # PROCESS QUESTION
+    # -----------------------------------------------------
 
     if question:
 
         try:
 
             with st.spinner(
-                "Searching the book and generating an answer..."
+                "Searching your material and generating an answer..."
             ):
 
                 answer, sources = answer_question(
                     vector_store,
-                    question
+                    question,
                 )
-
-            # =================================================
-            # CONVERT SOURCES INTO SESSION-SAFE DATA
-            # =================================================
 
             stored_sources = []
 
@@ -298,105 +1305,90 @@ with chat_tab:
                 stored_sources.append(
                     {
                         "content": source.page_content,
-
-                        "book_name": source.metadata.get(
-                            "book_name",
-                            uploaded_file.name
-                        )
+                        "document_name":
+                            source.metadata.get(
+                                "book_name",
+                                uploaded_file.name,
+                            ),
                     }
                 )
-
-            # =================================================
-            # CREATE CONVERSATION ITEM
-            # =================================================
 
             conversation = {
                 "question": question,
                 "answer": answer,
-                "sources": stored_sources
+                "sources": stored_sources,
             }
 
-            # =================================================
-            # STORE NEWEST CONVERSATION FIRST
-            # =================================================
-
+            # Newest conversation appears first.
             st.session_state.chat_history.insert(
                 0,
-                conversation
+                conversation,
             )
 
         except Exception as error:
 
             conversation = {
                 "question": question,
-
                 "answer": (
-                    f"Unable to generate an answer: {error}"
+                    "Unable to generate an answer: "
+                    f"{error}"
                 ),
-
-                "sources": []
+                "sources": [],
             }
 
-            # Store failed request too so the user can see it
             st.session_state.chat_history.insert(
                 0,
-                conversation
+                conversation,
             )
 
-    # =====================================================
+    # -----------------------------------------------------
     # CHAT CONTROLS
-    # =====================================================
+    # -----------------------------------------------------
 
     if st.session_state.chat_history:
 
-        control_col1, control_col2 = st.columns(
-            [1, 6]
+        clear_col, spacer_col = st.columns(
+            [1.4, 5.6]
         )
 
-        with control_col1:
+        with clear_col:
 
             if st.button(
-                "🗑️ Clear Chat",
-                key="clear_chat_button"
+                "🗑️ Clear Conversation",
+                key="clear_chat_button",
+                use_container_width=True,
             ):
-
                 confirm_clear_chat()
 
         st.divider()
 
-    # =====================================================
-    # DISPLAY CONVERSATION HISTORY
-    # =====================================================
-    #
-    # Conversation order:
-    #
-    # Newest conversation
-    # ↓
-    # Previous conversation
-    # ↓
-    # Oldest conversation
-    #
-    # =====================================================
+    else:
+
+        st.info(
+            "Ask about concepts, characters, definitions, "
+            "events, explanations, relationships, or any "
+            "information contained in the uploaded material."
+        )
+
+    # -----------------------------------------------------
+    # CONVERSATION HISTORY
+    # -----------------------------------------------------
 
     for conversation_index, conversation in enumerate(
         st.session_state.chat_history
     ):
 
-        # =================================================
-        # USER QUESTION
-        # =================================================
-
-        with st.chat_message("user"):
+        with st.chat_message(
+            "user"
+        ):
 
             st.markdown(
-                conversation["question"]
+                f"**{conversation['question']}**"
             )
 
-        # =================================================
-        # AI ANSWER
-        # =================================================
-
-        with st.chat_message("assistant"):
+        with st.chat_message(
+            "assistant"
+        ):
 
             st.markdown(
                 conversation["answer"]
@@ -404,104 +1396,148 @@ with chat_tab:
 
             sources = conversation.get(
                 "sources",
-                []
+                [],
             )
-
-            # =============================================
-            # RETRIEVED SOURCES
-            # =============================================
 
             if sources:
 
                 with st.expander(
-                    "🔎 View Retrieved Sources"
+                    f"🔎 Retrieved Sources · {len(sources)}"
                 ):
 
                     for source_index, source in enumerate(
                         sources,
-                        start=1
+                        start=1,
                     ):
 
                         st.markdown(
-                            f"**Source {source_index}**"
+                            f"**Passage {source_index}**"
                         )
 
                         st.write(
                             source["content"]
                         )
 
-                        if source.get("book_name"):
+                        if source.get(
+                            "document_name"
+                        ):
 
                             st.caption(
-                                f"Source: {source['book_name']}"
+                                "Source · "
+                                f"{source['document_name']}"
                             )
 
-                        # Don't add divider after final source
-                        if source_index < len(sources):
-
+                        if source_index < len(
+                            sources
+                        ):
                             st.divider()
-
-        # =================================================
-        # SEPARATE CONVERSATIONS
-        # =================================================
 
         if (
             conversation_index
-            < len(st.session_state.chat_history) - 1
+            < len(
+                st.session_state.chat_history
+            ) - 1
         ):
-
             st.divider()
-            
-            
-            
+
+
 # =========================================================
-# AI SUMMARY
+# SMART SUMMARY
 # =========================================================
 
-with summary_tab:
+if workspace == "📝 Smart Summary":
 
-    st.header("📝 AI Summary Generator")
+    st.markdown(
+        """
+<div class="ll-section-kicker">
+    AI-Powered Understanding
+</div>
 
-    st.write(
-        "Generate an AI-powered summary of the book."
+<div class="ll-section-title">
+    Summarize your learning material
+</div>
+
+<div class="ll-section-description">
+    Choose the level of detail you need and let LearnLens
+    condense your uploaded material into a focused,
+    study-friendly overview.
+</div>
+""",
+        unsafe_allow_html=True,
     )
 
-    summary_type = st.selectbox(
-        "Summary length",
-        [
-            "Short",
-            "Medium",
-            "Detailed"
-        ],
-        key="summary_length"
-    )
+    with st.container(border=True):
+        st.markdown("**Choose how detailed you want the summary to be**")
 
-    if st.button(
-        "Generate Summary",
-        key="generate_summary_button"
-    ):
+        summary_type = st.segmented_control(
+            "Summary depth",
+            ["⚡ Short", "📖 Medium", "🔎 Detailed"],
+            default="📖 Medium",
+            key="summary_depth_control",
+            label_visibility="collapsed",
+        )
+
+        if summary_type is None:
+            summary_type = "📖 Medium"
+
+        summary_type = summary_type.split(" ", 1)[1]
+
+        summary_descriptions = {
+            "Short": "Quick revision · key ideas only · fastest to read",
+            "Medium": "Balanced study notes · important concepts with context",
+            "Detailed": "Deeper coverage · concepts, events, arguments and relationships",
+        }
+
+        st.caption(summary_descriptions[summary_type])
+
+        generate_summary_clicked = st.button(
+            "✨ Generate Summary",
+            key="generate_summary_button",
+            type="primary",
+            use_container_width=True,
+        )
+
+    if generate_summary_clicked:
 
         with st.spinner(
-            "Generating summary..."
+            f"Creating your {summary_type.lower()} summary..."
         ):
 
             try:
 
                 summary = generate_summary(
                     chunks,
-                    summary_type
+                    summary_type,
                 )
 
-                st.subheader(
-                    f"{summary_type} Summary"
+                st.divider()
+
+                st.markdown(
+                    f"""
+<div class="ll-section-kicker">
+    Generated Result
+</div>
+
+<div class="ll-section-title">
+    {summary_type} Summary
+</div>
+""",
+                    unsafe_allow_html=True,
                 )
 
-                st.write(summary)
+                with st.container(
+                    border=True
+                ):
+
+                    st.markdown(
+                        summary
+                    )
 
             except Exception as error:
 
                 st.error(
-                    f"Unable to generate summary: {error}"
+                    "Unable to generate summary: "
+                    f"{error}"
                 )
 
 
@@ -509,60 +1545,84 @@ with summary_tab:
 # AI QUIZ
 # =========================================================
 
-with quiz_tab:
+if workspace == "🧠 AI Quiz":
 
-    st.header("🧠 AI Quiz Generator")
+    st.markdown(
+        """
+<div class="ll-section-kicker">
+    Test Your Understanding
+</div>
 
-    st.write(
-        "Generate multiple-choice questions "
-        "from the book content."
+<div class="ll-section-title">
+    Generate a practice quiz
+</div>
+
+<div class="ll-section-description">
+    Create fresh multiple-choice questions from your uploaded
+    learning material and instantly evaluate your understanding.
+</div>
+""",
+        unsafe_allow_html=True,
     )
 
-    col1, col2 = st.columns(2)
+    quiz_col1, quiz_col2, quiz_col3 = (
+        st.columns(
+            [1, 1, 1]
+        )
+    )
 
     # -----------------------------------------------------
     # NUMBER OF QUESTIONS
     # -----------------------------------------------------
 
-    with col1:
+    with quiz_col1:
 
         num_questions = st.selectbox(
-            "Number of questions",
+            "Questions",
             [
                 3,
                 5,
-                10
+                10,
             ],
-            key="num_questions"
+            key="num_questions",
         )
 
     # -----------------------------------------------------
     # DIFFICULTY
     # -----------------------------------------------------
 
-    with col2:
+    with quiz_col2:
 
         difficulty = st.selectbox(
             "Difficulty",
             [
                 "Easy",
                 "Medium",
-                "Hard"
+                "Hard",
             ],
-            key="quiz_difficulty"
+            key="quiz_difficulty",
         )
 
     # -----------------------------------------------------
     # GENERATE QUIZ
     # -----------------------------------------------------
 
-    if st.button(
-        "Generate Quiz",
-        key="generate_quiz_button"
-    ):
+    with quiz_col3:
+
+        st.write("")
+        st.write("")
+
+        generate_quiz_clicked = st.button(
+            "✨ Generate Quiz",
+            key="generate_quiz_button",
+            type="primary",
+            use_container_width=True,
+        )
+
+    if generate_quiz_clicked:
 
         with st.spinner(
-            "Creating your quiz..."
+            f"Creating a {difficulty.lower()} quiz..."
         ):
 
             try:
@@ -570,7 +1630,7 @@ with quiz_tab:
                 quiz = generate_quiz(
                     chunks,
                     num_questions,
-                    difficulty
+                    difficulty,
                 )
 
                 if not quiz:
@@ -582,10 +1642,9 @@ with quiz_tab:
 
                 else:
 
-                    # Save quiz in session state
                     st.session_state.quiz = quiz
 
-                    # Clear previous answers
+                    # Clear previous answers.
                     for key in list(
                         st.session_state.keys()
                     ):
@@ -593,19 +1652,27 @@ with quiz_tab:
                         if key.startswith(
                             "quiz_answer_"
                         ):
-
                             del st.session_state[key]
+
+                    # Remove previous result.
+                    if (
+                        "quiz_result"
+                        in st.session_state
+                    ):
+                        del st.session_state[
+                            "quiz_result"
+                        ]
 
             except Exception as error:
 
                 st.error(
-                    f"Unable to generate quiz: {error}"
+                    "Unable to generate quiz: "
+                    f"{error}"
                 )
 
-
-    # =====================================================
+    # -----------------------------------------------------
     # DISPLAY QUIZ
-    # =====================================================
+    # -----------------------------------------------------
 
     if "quiz" in st.session_state:
 
@@ -613,7 +1680,29 @@ with quiz_tab:
 
         st.divider()
 
-        st.subheader("Your Quiz")
+        quiz_header_col, quiz_badge_col = (
+            st.columns(
+                [4, 1]
+            )
+        )
+
+        with quiz_header_col:
+
+            st.subheader(
+                "Your Practice Quiz"
+            )
+
+            st.caption(
+                "Choose one answer for every question "
+                "before submitting."
+            )
+
+        with quiz_badge_col:
+
+            st.metric(
+                "Questions",
+                len(quiz),
+            )
 
         answers = []
 
@@ -621,53 +1710,74 @@ with quiz_tab:
             quiz
         ):
 
-            st.markdown(
-                f"### Question {index + 1}"
-            )
+            with st.container(
+                border=True
+            ):
 
-            st.write(
-                question_data.get(
+                st.caption(
+                    f"QUESTION {index + 1} OF {len(quiz)}"
+                )
+
+                question_text = question_data.get(
                     "question",
-                    "Question unavailable"
-                )
-            )
-
-            options = question_data.get(
-                "options",
-                []
-            )
-
-            if options:
-
-                answer = st.radio(
-                    "Choose your answer:",
-                    options,
-                    key=f"quiz_answer_{index}",
-                    index=None
+                    "Question unavailable",
                 )
 
-                answers.append(answer)
-
-            else:
-
-                st.warning(
-                    "No options available for this question."
+                st.markdown(
+                    f'<div class="ll-quiz-question">{question_text}</div>',
+                    unsafe_allow_html=True,
                 )
 
-                answers.append(None)
+                options = question_data.get(
+                    "options",
+                    [],
+                )
 
-            st.write("")
+                if options:
 
+                    answer = st.radio(
+                        "Choose your answer",
+                        options,
+                        key=f"quiz_answer_{index}",
+                        index=None,
+                        label_visibility="collapsed",
+                    )
 
-        # =================================================
+                    answers.append(
+                        answer
+                    )
+
+                else:
+
+                    st.warning(
+                        "No options are available "
+                        "for this question."
+                    )
+
+                    answers.append(
+                        None
+                    )
+
+        # -------------------------------------------------
         # SUBMIT QUIZ
-        # =================================================
+        # -------------------------------------------------
 
-        if st.button(
-            "Submit Quiz",
-            type="primary",
-            key="submit_quiz_button"
-        ):
+        submit_col, submit_spacer = (
+            st.columns(
+                [1.4, 4.6]
+            )
+        )
+
+        with submit_col:
+
+            submit_clicked = st.button(
+                "Submit Quiz",
+                type="primary",
+                key="submit_quiz_button",
+                use_container_width=True,
+            )
+
+        if submit_clicked:
 
             unanswered = sum(
                 answer is None
@@ -677,24 +1787,28 @@ with quiz_tab:
             if unanswered > 0:
 
                 st.warning(
-                    "Please answer all questions "
-                    "before submitting the quiz."
+                    f"You still have {unanswered} "
+                    f"unanswered question"
+                    f"{'s' if unanswered != 1 else ''}."
                 )
 
             else:
 
                 score = 0
-
                 results = []
 
                 for index, question_data in enumerate(
                     quiz
                 ):
 
-                    user_answer = answers[index]
+                    user_answer = answers[
+                        index
+                    ]
 
-                    correct_answer = question_data.get(
-                        "correct_answer"
+                    correct_answer = (
+                        question_data.get(
+                            "correct_answer"
+                        )
                     )
 
                     is_correct = (
@@ -703,96 +1817,181 @@ with quiz_tab:
                     )
 
                     if is_correct:
-
                         score += 1
 
                     results.append(
                         {
-                            "question": question_data.get(
-                                "question"
-                            ),
-                            "user_answer": user_answer,
-                            "correct_answer": correct_answer,
-                            "is_correct": is_correct
+                            "question":
+                                question_data.get(
+                                    "question"
+                                ),
+                            "user_answer":
+                                user_answer,
+                            "correct_answer":
+                                correct_answer,
+                            "is_correct":
+                                is_correct,
                         }
                     )
 
+                st.session_state.quiz_result = {
+                    "score": score,
+                    "results": results,
+                }
 
-                # =========================================
-                # SCORE
-                # =========================================
+    # -----------------------------------------------------
+    # QUIZ RESULTS
+    # -----------------------------------------------------
 
-                st.divider()
+    if (
+        "quiz" in st.session_state
+        and
+        "quiz_result" in st.session_state
+    ):
 
-                st.header(
-                    f"🎯 Score: {score}/{len(quiz)}"
+        quiz = st.session_state.quiz
+
+        result_data = (
+            st.session_state.quiz_result
+        )
+
+        score = result_data[
+            "score"
+        ]
+
+        results = result_data[
+            "results"
+        ]
+
+        percentage = (
+            score / len(quiz)
+        ) * 100
+
+        st.divider()
+
+        result_col1, result_col2, result_col3 = (
+            st.columns(3)
+        )
+
+        with result_col1:
+
+            st.metric(
+                "Score",
+                f"{score}/{len(quiz)}",
+            )
+
+        with result_col2:
+
+            st.metric(
+                "Percentage",
+                f"{percentage:.0f}%",
+            )
+
+        with result_col3:
+
+            if percentage == 100:
+                performance = "Excellent"
+
+            elif percentage >= 60:
+                performance = "Good"
+
+            else:
+                performance = "Keep Learning"
+
+            st.metric(
+                "Performance",
+                performance,
+            )
+
+        if percentage == 100:
+
+            st.success(
+                "🏆 Excellent — perfect score!"
+            )
+
+        elif percentage >= 60:
+
+            st.success(
+                "👏 Good work! You have a solid "
+                "understanding of the material."
+            )
+
+        else:
+
+            st.info(
+                "📚 Keep studying and try another quiz."
+            )
+
+        # -------------------------------------------------
+        # ANSWER REVIEW
+        # -------------------------------------------------
+
+        with st.expander(
+            "📋 Review Answers",
+            expanded=True,
+        ):
+
+            for index, result in enumerate(
+                results,
+                start=1,
+            ):
+
+                st.markdown(
+                    f"### Question {index}"
                 )
 
-                percentage = (
-                    score / len(quiz)
-                ) * 100
+                st.write(
+                    result["question"]
+                )
 
-
-                if percentage == 100:
+                if result[
+                    "is_correct"
+                ]:
 
                     st.success(
-                        "Excellent! Perfect score!"
+                        "✓ Correct"
                     )
 
-                elif percentage >= 60:
-
-                    st.success(
-                        "Good job!"
+                    st.write(
+                        "**Your answer:** "
+                        f"{result['user_answer']}"
                     )
 
                 else:
 
-                    st.info(
-                        "Keep reading and try again!"
+                    st.error(
+                        "✕ Incorrect"
                     )
 
+                    st.write(
+                        "**Your answer:** "
+                        f"{result['user_answer']}"
+                    )
 
-                # =========================================
-                # ANSWER REVIEW
-                # =========================================
+                    st.write(
+                        "**Correct answer:** "
+                        f"{result['correct_answer']}"
+                    )
 
-                with st.expander(
-                    "📋 Review Answers"
+                if index < len(
+                    results
                 ):
+                    st.divider()
 
-                    for index, result in enumerate(
-                        results,
-                        start=1
-                    ):
 
-                        st.markdown(
-                            f"### Question {index}"
-                        )
+# =========================================================
+# FOOTER
+# =========================================================
 
-                        st.write(
-                            result["question"]
-                        )
-
-                        st.write(
-                            f"Your answer: "
-                            f"{result['user_answer']}"
-                        )
-
-                        if result["is_correct"]:
-
-                            st.success(
-                                "Correct"
-                            )
-
-                        else:
-
-                            st.error(
-                                "Incorrect"
-                            )
-
-                            st.write(
-                                f"Correct answer: "
-                                f"{result['correct_answer']}"
-                            )
-
-                        st.divider()
+st.markdown(
+    """
+<div class="ll-footer">
+    &#10022; LearnLens AI
+    &nbsp;·&nbsp;
+    Retrieval-Augmented Learning Assistant
+    &nbsp;·&nbsp;
+    BGE + FAISS + Llama 3.1
+</div>
+""",
+    unsafe_allow_html=True,
+)
