@@ -437,28 +437,6 @@ Send context to LLM
 Generate response
 ```
 
----
-
-## 📸 Screenshots
-
-### Book Chat
-
-![Book Chat](screenshots/book_chat.png)
-
-### AI Summary Generator
-
-![AI Summary](screenshots/summary.png)
-
-### AI Quiz Generator
-
-![AI Quiz](screenshots/quiz.png)
-
-### Book Upload / Processing
-
-![Book Upload](screenshots/upload.png)
-
----
-
 ## 🧪 Error Handling and Validation
 
 The application includes error handling for common failures such as:
