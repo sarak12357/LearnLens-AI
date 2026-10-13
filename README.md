@@ -1,4 +1,4 @@
-# 📚 KitaabGhar AI
+# 📚 LearnLens AI
 
 ### An AI-Powered Intelligent Reading Assistant using RAG and Large Language Models
 
